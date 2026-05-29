@@ -11106,7 +11106,15 @@ class GatewayRunner:
         Accepts an optional focus topic: ``/compress <focus>`` guides the
         summariser to preserve information related to *focus* while being
         more aggressive about discarding everything else.
+
+        Also accepts strategy selection:
+          /compress strategy <name>   — use a specific truncation strategy
+          /compress strategies        — list available strategies
+
+        Available strategies: none, sliding_window, summarization (default)
         """
+        from agent.truncation_strategies import get_strategy, list_strategies
+
         source = event.source
         session_entry = self.session_store.get_or_create_session(source)
         history = self.session_store.load_transcript(session_entry.session_id)
@@ -11114,8 +11122,43 @@ class GatewayRunner:
         if not history or len(history) < 4:
             return t("gateway.compress.not_enough")
 
-        # Extract optional focus topic from command args
-        focus_topic = (event.get_command_args() or "").strip() or None
+        # Parse command args
+        args_str = (event.get_command_args() or "").strip()
+        focus_topic = None
+        strategy_name = None
+
+        if args_str.lower() == "strategies":
+            strategies = list_strategies()
+            lines = ["Available truncation strategies:"]
+            for s in strategies:
+                desc = {
+                    "none": "No truncation — keep all messages",
+                    "sliding_window": "Keep last N messages, drop oldest",
+                    "summarization": "Use LLM to summarize older messages (default)",
+                }.get(s, "")
+                default_tag = " (default)" if s == "summarization" else ""
+                lines.append(f"  • **{s}** — {desc}{default_tag}")
+            return "\n".join(lines)
+
+        if args_str.lower().startswith("strategy "):
+            strategy_name = args_str[9:].strip().lower()
+            try:
+                get_strategy(strategy_name)
+            except ValueError:
+                available = ", ".join(list_strategies())
+                return f"Unknown strategy '{strategy_name}'. Available: {available}"
+        elif args_str:
+            # Backward compatibility: old /compress <focus> still works
+            # Treat it as focus topic with summarization strategy
+            focus_topic = args_str
+            strategy_name = "summarization"
+        else:
+            # No args: use default strategy from config, fallback to summarization
+            try:
+                _cfg = self._load_gateway_config() if hasattr(self, '_load_gateway_config') else {}
+                strategy_name = _cfg.get("compression", {}).get("strategy", "summarization")
+            except Exception:
+                strategy_name = "summarization"
 
         try:
             from run_agent import AIAgent
@@ -11163,10 +11206,25 @@ class GatewayRunner:
                     return t("gateway.compress.nothing_to_do")
 
                 loop = asyncio.get_running_loop()
-                compressed, _ = await loop.run_in_executor(
-                    None,
-                    lambda: tmp_agent._compress_context(msgs, "", approx_tokens=approx_tokens, focus_topic=focus_topic)
-                )
+
+                # Check if a non-summarization strategy was requested
+                _strategy_used = None
+                if strategy_name and strategy_name != "summarization":
+                    from agent.truncation_strategies import get_strategy
+                    try:
+                        _strat = get_strategy(strategy_name)
+                        _budget = int(approx_tokens * 0.5)  # target 50% of current
+                        _strat_result = _strat.truncate(msgs, budget_tokens=_budget)
+                        compressed = _strat_result.messages
+                        _strategy_used = strategy_name
+                    except ValueError:
+                        pass  # fall through to default summarization
+
+                if _strategy_used is None:
+                    compressed, _ = await loop.run_in_executor(
+                        None,
+                        lambda: tmp_agent._compress_context(msgs, "", approx_tokens=approx_tokens, focus_topic=focus_topic)
+                    )
 
                 # _compress_context already calls end_session() on the old session
                 # (preserving its full transcript in SQLite) and creates a new
@@ -11210,6 +11268,8 @@ class GatewayRunner:
             lines = [f"🗜️ {summary['headline']}"]
             if focus_topic:
                 lines.append(t("gateway.compress.focus_line", topic=focus_topic))
+            if _strategy_used:
+                lines.append(f"Strategy: **{_strategy_used}**")
             lines.append(summary["token_line"])
             if summary["note"]:
                 lines.append(summary["note"])
