@@ -201,7 +201,7 @@ def setup_wizard_completion(
     if not status.profile_installed:
         should_install = auto_install
         if not auto_install and prompter:
-            from .wizard_i18n import t
+            from wizard_i18n import t
             should_install = prompter.confirm(
                 message=t("wizard.completion.enable", {"shell": status.shell, "cli": cli_name}),
                 default=True,

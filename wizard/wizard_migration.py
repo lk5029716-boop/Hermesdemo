@@ -188,7 +188,7 @@ class SetupMigration:
             logger.info(f"  {line}")
 
         if prompter:
-            from .wizard_i18n import t
+            from wizard_i18n import t
             await prompter.note("\n".join(preview_lines), t("wizard.migration.previewTitle"))
 
         # Check for conflicts
@@ -201,14 +201,14 @@ class SetupMigration:
         # Step 4: Confirm
         confirmed = True
         if not non_interactive and prompter:
-            from .wizard_i18n import t
+            from wizard_i18n import t
             confirmed = prompter.confirm(
                 message=t("wizard.migration.apply"),
                 default=False,
             )
 
         if not confirmed:
-            from .wizard_prompts import WizardCancelledError
+            from wizard_prompts import WizardCancelledError
             raise WizardCancelledError("Migration cancelled")
 
         # Step 5: Create backup
@@ -242,7 +242,7 @@ class SetupMigration:
             logger.info(line)
 
         if prompter:
-            from .wizard_i18n import t
+            from wizard_i18n import t
             await prompter.note("\n".join(result_lines), t("wizard.migration.appliedTitle"))
             await prompter.outro(t("wizard.migration.complete"))
 

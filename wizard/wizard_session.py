@@ -14,7 +14,7 @@ import asyncio
 import uuid
 from typing import Any, Optional
 
-from .wizard_prompts import WizardPrompter, WizardProgress, WizardCancelledError
+from wizard_prompts import WizardPrompter, WizardProgress, WizardCancelledError
 
 
 class WizardStep:

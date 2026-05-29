@@ -17,7 +17,7 @@ Provides a modular setup wizard with:
 - Wizard flow types (wizard_types.py)
 """
 
-from .wizard_prompts import (
+from wizard_prompts import (
     WizardCancelledError,
     WizardPrompter,
     WizardProgress,
@@ -25,8 +25,8 @@ from .wizard_prompts import (
     TerminalPrompter,
     TerminalProgress,
 )
-from .wizard_session import WizardSession, WizardStep, WizardNextResult
-from .wizard_types import (
+from wizard_session import WizardSession, WizardStep, WizardNextResult
+from wizard_types import (
     WizardFlow,
     GatewayBind,
     GatewayAuthChoice,
@@ -35,12 +35,12 @@ from .wizard_types import (
     GatewayWizardSettings,
     SecretRef,
 )
-from .wizard_security import (
+from wizard_security import (
     get_security_note_title,
     get_security_confirm_message,
     get_security_note_message,
 )
-from .wizard_i18n import WizardI18n, t
+from wizard_i18n import WizardI18n, t
 
 __all__ = [
     "WizardCancelledError",

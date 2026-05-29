@@ -13,7 +13,7 @@ import secrets
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from gateway.wizard_prompts import WizardCancelledError, WizardPrompter, WizardSelectOption
+from wizard_prompts import WizardCancelledError, WizardPrompter, WizardSelectOption
 
 
 @dataclass
@@ -104,7 +104,7 @@ async def configure_gateway(
     Adapted from configureGatewayForSetup() in setup.gateway-config.ts.
     """
     if prompter is None:
-        from gateway.wizard_prompts import TerminalPrompter
+        from wizard_prompts import TerminalPrompter
         prompter = TerminalPrompter()
 
     existing = existing_config or {}

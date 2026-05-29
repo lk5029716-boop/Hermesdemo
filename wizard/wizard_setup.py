@@ -22,12 +22,12 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from gateway.wizard_prompts import (
+from wizard_prompts import (
     WizardCancelledError,
     WizardPrompter,
     WizardSelectOption,
 )
-from gateway.wizard_gateway_config import (
+from wizard_gateway_config import (
     GatewayWizardSettings,
     QuickstartGatewayDefaults,
     configure_gateway,
@@ -196,7 +196,7 @@ async def run_setup_wizard(
     if opts is None:
         opts = OnboardOptions()
     if prompter is None:
-        from gateway.wizard_prompts import TerminalPrompter
+        from wizard_prompts import TerminalPrompter
         prompter = TerminalPrompter()
 
     result = WizardResult()
@@ -380,7 +380,7 @@ async def run_setup_wizard(
             )
             if setup_comp:
                 try:
-                    from wizard.wizard_completion import CompletionInstaller
+                    from wizard_completion import CompletionInstaller
                     installer = CompletionInstaller("hermes")
                     status = installer.check_status()
                     if status.shell != "unknown":
@@ -422,7 +422,7 @@ async def run_setup_wizard(
             await prompter.note(f"Warning: Could not write config: {e}", "Config")
 
         # ── Step 15: Finalize ──────────────────────────────────────────
-        from gateway.wizard_finalize import finalize_setup
+        from wizard_finalize import finalize_setup
         await finalize_setup(
             config=base_config,
             settings=gw_settings,

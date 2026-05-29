@@ -23,7 +23,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from gateway.wizard_prompts import WizardPrompter
+from wizard_prompts import WizardPrompter
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ async def finalize_setup(
     Adapted from finalizeSetupWizard() in setup.finalize.ts.
     """
     if prompter is None:
-        from gateway.wizard_prompts import TerminalPrompter
+        from wizard_prompts import TerminalPrompter
         prompter = TerminalPrompter()
 
     result = FinalizeResult()
